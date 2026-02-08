@@ -10,6 +10,11 @@ bool WorkStealingQueue::empty() const {
     return deque_.empty();
 }
 
+size_t WorkStealingQueue::size() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return deque_.size();
+}
+
 void WorkStealingQueue::push(Task task) {
     std::lock_guard<std::mutex> lock(mutex_);
     deque_.push_back(std::move(task));

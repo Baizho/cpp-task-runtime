@@ -26,6 +26,7 @@ class WorkStealingQueue {
         bool try_pop(Task& task);        // Owner: pop back
         bool try_steal(Task& task);      // Thief: pop front
         bool empty() const; 
+        size_t size() const; 
     private:
         std::deque<Task> deque_;
         mutable std::mutex mutex_;
