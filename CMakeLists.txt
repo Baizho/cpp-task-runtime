@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(runtime
     src/thread_pool.cpp
+    src/work_stealing_queue.cpp
 )
 
 # Public include directory
@@ -24,18 +25,12 @@ target_include_directories(runtime
         ${PROJECT_SOURCE_DIR}/include
 )
 
-# Threads library (needed later anyway)
-find_package(Threads REQUIRED)
-target_link_libraries(runtime
-    PUBLIC Threads::Threads
-)
-
 # ==============================
 # Examples
 # ==============================
 
-add_executable(basic_usage
-    examples/basic_usage.cpp
+add_executable(thread_pool_test
+    test/thread_pool_test
 )
 
 target_link_libraries(basic_usage
