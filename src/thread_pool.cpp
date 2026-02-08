@@ -94,6 +94,7 @@ void ThreadPool::submit(Task task) {
     if (work_queues_[idx]->try_push(std::move(task), max_queue_tasks_)) {
         guard.committed = true;
         cv_work_.notify_one();
+        stats_.tasks_submitted.fetch_add(1, std::memory_order_relaxed);
         // std::cout << "Submitted a task " << "\n";
         return;
     }
@@ -102,6 +103,7 @@ void ThreadPool::submit(Task task) {
     guard.committed = true;
     // std::cout << "Submitted a task " << "\n";
     cv_work_.notify_one();
+    stats_.tasks_submitted.fetch_add(1, std::memory_order_relaxed);
 }
 
 void ThreadPool::worker(size_t idx) {
@@ -123,19 +125,23 @@ void ThreadPool::worker(size_t idx) {
 
         for (size_t attempt = 1; attempt <= steal_attempts_; ++attempt) {
             size_t i = get_next_victim(idx, attempt);
+            stats_.steal_attempts.fetch_add(1, std::memory_order_relaxed);
             if (work_queues_[i]->try_steal(task)) {
                 found_work = true;
+                stats_.tasks_stolen.fetch_add(1, std::memory_order_relaxed);
                 {
                     TaskGuard guard(active_tasks_, cv_completion_);
                     execute_task(task);
                 }
                 break;
             }
+            stats_.failed_steals.fetch_add(1, std::memory_order_relaxed);
         }
 
         if (found_work) continue;
 
         // try global queue
+        stats_.tasks_stolen.fetch_add(1, std::memory_order_relaxed);
         if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
             // std::cout << "Steal from global queue\n";
             {
@@ -144,6 +150,7 @@ void ThreadPool::worker(size_t idx) {
             }
             continue;
         }
+        stats_.failed_steals.fetch_add(1, std::memory_order_relaxed);
         
         if (stop_.load(std::memory_order_acquire) && active_tasks_.load(std::memory_order_acquire) == 0) {
             break;
@@ -174,6 +181,7 @@ void ThreadPool::execute_task(Task& task) {
     try {
         // std::cout << active_tasks_.load(std::memory_order_relaxed) << "\n";
         task();
+        stats_.tasks_executed.fetch_add(1, std::memory_order_relaxed);
     } catch (const std::exception& e) {
         // Optional: 
         // std::cerr << "Task exception: " << e.what() << '\n';

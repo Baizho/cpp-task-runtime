@@ -3,6 +3,7 @@
 #define THREAD_POOL_H
 
 #include <runtime/config.h>
+#include <stats.h>
 #include <runtime/work_stealing_queue.h>
 #include <thread>
 #include <vector>
@@ -29,7 +30,10 @@ class ThreadPool {
         void submit(Task task);
         void wait(); 
         void shutdown();
+        const RuntimeStats& stats() const { return stats_; }
+        RuntimeStats stats_;
     private:
+
         void execute_task(Task& task);
         void worker(size_t idx);
         size_t get_random_thread();
