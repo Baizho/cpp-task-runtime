@@ -22,7 +22,7 @@ class WorkStealingQueue {
         WorkStealingQueue& operator=(WorkStealingQueue&&) noexcept = delete;
 
         void push(Task task);           // Owner: push back
-        bool try_push(Task task, size_t max_queue_size);       // Owner: try push back
+        bool try_push(Task&& task, size_t max_queue_size);       // Owner: try push back
         bool try_pop(Task& task);        // Owner: pop back
         bool try_steal(Task& task);      // Thief: pop front
         bool empty() const; 

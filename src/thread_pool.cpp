@@ -115,7 +115,7 @@ void ThreadPool::worker(size_t idx) {
 
         // try global queue
         if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
-            std::cout << "Steal from global queue\n";
+            // std::cout << "Steal from global queue\n";
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
                 execute_task(task);
