@@ -15,6 +15,17 @@ void ThreadPool::worker(size_t idx) {
             continue;
         }
 
+        // try global queue
+        if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
+            {
+                TaskGuard guard(active_tasks_, cv_completion_);
+                task();
+            }
+            continue;
+        }
+
+        // stealing from other threads
+
         bool found_work = false;
 
         for (size_t attempt = 1; attempt <= steal_attempts_; ++attempt) {
