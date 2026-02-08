@@ -26,7 +26,7 @@ target_include_directories(runtime
 )
 
 # ==============================
-# Examples
+# Tests
 # ==============================
 
 add_executable(thread_pool_test
