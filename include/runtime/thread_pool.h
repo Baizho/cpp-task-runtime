@@ -37,6 +37,7 @@ class ThreadPool {
         
         std::vector<std::thread> threads_;
         std::vector<WorkStealingQueue> work_queues_;
+        WorkStealingQueue global_queue_;  // Add unbounded overflow queue
 
         std::atomic<size_t> active_tasks_{0}; // track running tasks
         std::condition_variable cv_completion_; 
