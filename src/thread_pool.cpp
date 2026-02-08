@@ -20,7 +20,7 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
         if (steal_attempts_ <= 0) {
             throw std::invalid_argument("Steal attempts must be > 0");
         }
-        work_queues_.resize(thread_count_);
+        work_queues_.reserve(thread_count_);
         for (size_t i = 0; i < thread_count_; ++i) {
             threads_.emplace_back(&ThreadPool::worker, this, i);
         }
