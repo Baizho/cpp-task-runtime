@@ -3,7 +3,7 @@
 #define THREAD_POOL_H
 
 #include <runtime/config.h>
-#include <stats.h>
+#include <runtime/stats.h>
 #include <runtime/work_stealing_queue.h>
 #include <thread>
 #include <vector>
