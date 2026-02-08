@@ -38,13 +38,32 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
 
 // Destructor
 ThreadPool::~ThreadPool() noexcept {
-    // std::cout << "Called destructor \n";
-    stop_.store(true, std::memory_order_release);
+    shutdown();
+}
+
+void ThreadPool::shutdown() {
+    // stop accepting new tasks
+    bool expected = false;
+    if (!stop_.compare_exchange_strong(expected, true,
+                                        std::memory_order_acq_rel)) {
+        // already shutting down
+        return;
+    }
+    
+    // wait for currently active tasks to finish
+    wait();
+
+    // wake all workers so they can exit
     cv_work_.notify_all();
-	// Join all worker threads (blocking until all tasks complete)
-	for (auto& thr: threads_) {
-		thr.join();
-	}
+
+    // join threads
+    for (auto& t : threads_) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    threads_.clear();
 }
 
 // Choose a thread's queue and add a task to it
@@ -131,7 +150,9 @@ void ThreadPool::worker(size_t idx) {
         }
 
         std::unique_lock<std::mutex> lock(work_mutex_);
-        cv_work_.wait_for(lock, idle_sleep_);
+        cv_work_.wait_for(lock, idle_sleep_, [this]() {
+            return stop_.load(std::memory_order_acquire);
+        });
     }
 }
 

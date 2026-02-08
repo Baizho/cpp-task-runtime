@@ -28,6 +28,7 @@ class ThreadPool {
             -> std::future<typename std::invoke_result<F, Args...>::type>;
         void submit(Task task);
         void wait(); 
+        void shutdown();
     private:
         void execute_task(Task& task);
         void worker(size_t idx);
