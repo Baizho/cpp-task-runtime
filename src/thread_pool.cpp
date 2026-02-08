@@ -22,7 +22,7 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
         }
         work_queues_.reserve(thread_count_);
         for (size_t i = 0; i < thread_count_; ++i) {
-            threads_.emplace_back(&ThreadPool::worker, this, i);
+            work_queues_.emplace_back(std::make_unique<WorkStealingQueue>());
         }
     } 
 
@@ -57,7 +57,7 @@ void ThreadPool::submit(Task task) {
     SubmitGuard guard{active_tasks_};
     
     size_t idx = get_random_thread();
-    if (work_queues_[idx].try_push(std::move(task), max_queue_tasks_)) {
+    if (work_queues_[idx]->try_push(std::move(task), max_queue_tasks_)) {
         guard.committed = true;
         return;
     }
@@ -70,7 +70,7 @@ void ThreadPool::worker(size_t idx) {
     while(true) {
         Task task;
 
-        if (work_queues_[idx].try_pop(task)) {
+        if (work_queues_[idx]->try_pop(task)) {
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
                 execute_task(task);
@@ -84,7 +84,7 @@ void ThreadPool::worker(size_t idx) {
 
         for (size_t attempt = 1; attempt <= steal_attempts_; ++attempt) {
             size_t i = get_next_victim(idx, attempt);
-            if (work_queues_[i].try_steal(task)) {
+            if (work_queues_[i]->try_steal(task)) {
                 found_work = true;
                 {
                     TaskGuard guard(active_tasks_, cv_completion_);
