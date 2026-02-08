@@ -26,6 +26,48 @@ target_include_directories(runtime
 )
 
 # ==============================
+# Examples
+# ==============================
+
+add_executable(basic_usage
+    examples/basic_usage.cpp
+)
+
+target_link_libraries(basic_usage
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(future_example
+    examples/future_example.cpp
+)
+
+target_link_libraries(future_example
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(parallel_for_example
+    examples/parallel_for_example.cpp
+)
+
+target_link_libraries(parallel_for_example
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(parallel_reduce_example
+    examples/parallel_reduce_example.cpp
+)
+
+target_link_libraries(parallel_reduce_example
+    PRIVATE runtime
+)
+
+# ==============================
 # Tests
 # ==============================
 
@@ -37,6 +79,8 @@ target_link_libraries(thread_pool_test
     PRIVATE runtime
 )
 
+# ==============================
+
 add_executable(work_stealing_queue_test
     tests/work_stealing_queue_test.cpp
 )
@@ -44,6 +88,8 @@ add_executable(work_stealing_queue_test
 target_link_libraries(work_stealing_queue_test
     PRIVATE runtime
 )
+
+# ==============================
 
 add_executable(shutdown_test
     tests/shutdown_test.cpp
@@ -53,3 +99,4 @@ target_link_libraries(shutdown_test
     PRIVATE runtime
 )
 
+# ==============================
