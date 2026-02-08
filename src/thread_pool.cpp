@@ -1,6 +1,7 @@
 // Thread pool with work stealing
 #include <runtime/thread_pool.h>
 #include <stdexcept>
+#include <iostream>
 
 namespace runtime {
 
@@ -13,6 +14,7 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
       steal_policy_(options.steal_policy),
       stop_(false)
     {
+        std::cout << "Creating ThreadPool " << "\n";
         // Validate configuration
         if (thread_count_ == 0) {
             throw std::invalid_argument("Thread count must be > 0");
@@ -24,10 +26,19 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
         for (size_t i = 0; i < thread_count_; ++i) {
             work_queues_.emplace_back(std::make_unique<WorkStealingQueue>());
         }
+
+        threads_.reserve(thread_count_);
+        for (size_t i = 0; i < thread_count_; ++i) {
+            std::cout << "Starting thread " << i << "\n";
+            threads_.emplace_back(&ThreadPool::worker, this, i);
+        }
+
+        std::cout << "ThreadPool created " << "\n";
     } 
 
 // Destructor
 ThreadPool::~ThreadPool() noexcept {
+    std::cout << "Called destructor \n";
     stop_.store(true, std::memory_order_release);
 	// Join all worker threads (blocking until all tasks complete)
 	for (auto& thr: threads_) {
@@ -37,6 +48,7 @@ ThreadPool::~ThreadPool() noexcept {
 
 // Choose a thread's queue and add a task to it
 void ThreadPool::submit(Task task) {
+    std::cout << "Submitting a task " << "\n";
     // Check if shutting down
     if (stop_.load(std::memory_order_acquire)) {
         throw std::runtime_error("ThreadPool is shutting down");
@@ -56,17 +68,22 @@ void ThreadPool::submit(Task task) {
     active_tasks_.fetch_add(1, std::memory_order_release);
     SubmitGuard guard{active_tasks_};
     
+    
+    
     size_t idx = get_random_thread();
     if (work_queues_[idx]->try_push(std::move(task), max_queue_tasks_)) {
         guard.committed = true;
+        std::cout << "Submitted a task " << "\n";
         return;
     }
     
     global_queue_.push(std::move(task));  // Protected now!
     guard.committed = true;
+    std::cout << "Submitted a task " << "\n";
 }
 
 void ThreadPool::worker(size_t idx) {
+    std::cout << "Worker " << std::this_thread::get_id() << " is here\n";
     while(true) {
         Task task;
 
@@ -129,6 +146,7 @@ size_t ThreadPool::get_next_victim(size_t i, size_t attempt) {
 // Execute task with exception handling
 void ThreadPool::execute_task(Task& task) {
     try {
+        std::cout << "Executing task... \n";
         task();
     } catch (const std::exception& e) {
         // Optional: std::cerr << "Task exception: " << e.what() << '\n';
@@ -140,9 +158,11 @@ void ThreadPool::execute_task(Task& task) {
 void ThreadPool::wait() {
     // WARNING: Do not call wait() from within a task, as it will deadlock
     std::unique_lock<std::mutex> lock(completion_mutex_);
+    std::cout << "Waiting " << "\n";
     cv_completion_.wait(lock, [this] {
         return active_tasks_.load(std::memory_order_acquire) == 0;
     });
+    std::cout << "Done waiting " << "\n";
 }
 
 } // namespace runtime
