@@ -62,6 +62,10 @@ class ThreadPool {
         std::atomic<size_t> active_tasks_{0}; // track running tasks
         std::condition_variable cv_completion_; 
         std::mutex completion_mutex_;
+        
+        std::condition_variable cv_work_;
+        std::mutex work_mutex_;
+
 };
 
 } // namespace runtime

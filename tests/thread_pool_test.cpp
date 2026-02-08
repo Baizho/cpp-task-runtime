@@ -191,7 +191,6 @@ void test_custom_config() {
     runtime::config::ThreadPoolOptions options;
     options.threads = 2;
     options.steal_attempts = 8;
-    options.idle_sleep = std::chrono::milliseconds(5);
     options.max_queue_tasks = 100;
     options.steal_policy = runtime::config::StealPolicy::RoundRobin;
     

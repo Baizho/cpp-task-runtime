@@ -40,6 +40,7 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
 ThreadPool::~ThreadPool() noexcept {
     // std::cout << "Called destructor \n";
     stop_.store(true, std::memory_order_release);
+    cv_work_.notify_all();
 	// Join all worker threads (blocking until all tasks complete)
 	for (auto& thr: threads_) {
 		thr.join();
@@ -73,6 +74,7 @@ void ThreadPool::submit(Task task) {
     size_t idx = get_random_thread();
     if (work_queues_[idx]->try_push(std::move(task), max_queue_tasks_)) {
         guard.committed = true;
+        cv_work_.notify_one();
         // std::cout << "Submitted a task " << "\n";
         return;
     }
@@ -80,6 +82,7 @@ void ThreadPool::submit(Task task) {
     global_queue_.push(std::move(task));  // Protected now!
     guard.committed = true;
     // std::cout << "Submitted a task " << "\n";
+    cv_work_.notify_one();
 }
 
 void ThreadPool::worker(size_t idx) {
@@ -127,7 +130,8 @@ void ThreadPool::worker(size_t idx) {
             break;
         }
 
-        std::this_thread::sleep_for(idle_sleep_); 
+        std::unique_lock<std::mutex> lock(work_mutex_);
+        cv_work_.wait_for(lock, idle_sleep_);
     }
 }
 
