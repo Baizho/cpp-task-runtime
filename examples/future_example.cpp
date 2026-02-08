@@ -4,6 +4,8 @@
 #include <numeric>
 #include <cmath>
 
+#define M_PI 3.14159265358979323846
+
 // Example: Parallel computation with futures
 int main() {
     std::cout << "=== Future-based Parallel Computation ===\n\n";
