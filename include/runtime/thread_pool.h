@@ -22,6 +22,7 @@ class ThreadPool {
         void submit(Task task);
         void wait(); 
     private:
+        void execute_task(Task& task);
         void worker(size_t idx);
         size_t get_random_thread();
         size_t get_next_victim(size_t i, size_t attempt);

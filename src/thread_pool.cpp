@@ -67,6 +67,17 @@ size_t ThreadPool::get_next_victim(size_t i, size_t attempt) {
     return (i + attempt) % thread_count_;
 }
 
+// Execute task with exception handling
+void ThreadPool::execute_task(Task& task) {
+    try {
+        task();
+    } catch (const std::exception& e) {
+        // Optional: std::cerr << "Task exception: " << e.what() << '\n';
+    } catch (...) {
+        // Optional: std::cerr << "Task unknown exception\n";
+    }
+}
+
 void ThreadPool::wait() {
     //If a submitted task calls wait(), it deadlocks (task is counted, waits for count to reach 0, but can't complete while waiting).
     // just a precaution

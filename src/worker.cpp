@@ -12,15 +12,7 @@ void ThreadPool::worker(size_t idx) {
         if (work_queues_[idx].try_pop(task)) {
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
-                // Exception-safe: guard decrements counter even if task throws
-                try {
-                    task();
-                } catch (const std::exception& e) {
-                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
-                } catch (...) {
-                    std::cerr << "Caught an unknown exception" << std::endl;
-                }
-                
+                execute_task(task);
             }
             continue;
         }
@@ -35,14 +27,7 @@ void ThreadPool::worker(size_t idx) {
                 found_work = true;
                 {
                     TaskGuard guard(active_tasks_, cv_completion_);
-                    // Exception-safe
-                    try {
-                        task();
-                    } catch (const std::exception& e) {
-                        std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
-                    } catch (...) {
-                        std::cerr << "Caught an unknown exception" << std::endl;
-                    }
+                    execute_task(task);
                 }
                 break;
             }
@@ -54,13 +39,7 @@ void ThreadPool::worker(size_t idx) {
         if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
-                try {
-                    task();
-                } catch (const std::exception& e) {
-                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
-                } catch (...) {
-                    std::cerr << "Caught an unknown exception" << std::endl;
-                }
+                execute_task(task);
             }
             continue;
         }
