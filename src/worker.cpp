@@ -64,8 +64,8 @@ void ThreadPool::worker(size_t idx) {
         }
 
         if (found_work) continue;
-        if (stop_.load(std::memory_order_acquire) && 
-            active_tasks_.load(std::memory_order_relaxed) == 0) {
+        
+        if (stop_.load(std::memory_order_acquire) && active_tasks_.load(std::memory_order_acquire) == 0) {
             break;
         }
 

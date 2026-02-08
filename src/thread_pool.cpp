@@ -43,7 +43,7 @@ void ThreadPool::submit(Task task) {
         throw std::runtime_error("ThreadPool is shutting down");
     }
 
-    active_tasks_.fetch_add(1, std::memory_order_relaxed);
+    active_tasks_.fetch_add(1, std::memory_order_release);
     
     int idx = get_random_thread();
     // Try local queue first
@@ -71,7 +71,7 @@ int ThreadPool::get_next_victim(size_t i, size_t attempt) {
 void ThreadPool::wait() {
     std::unique_lock<std::mutex> lock(completion_mutex_);
     cv_completion_.wait(lock, [this] {
-        return active_tasks_.load(std::memory_order_relaxed) == 0;
+        return active_tasks_.load(std::memory_order_acquire) == 0;
     });
 }
 
