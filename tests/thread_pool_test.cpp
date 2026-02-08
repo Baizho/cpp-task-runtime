@@ -388,17 +388,17 @@ void test_future_return() {
     runtime::ThreadPool pool;
     
     // Submit task that returns an int
-    auto future1 = pool.submit([]() {
+    auto future1 = pool.submit_task([]() {
         return 42;
     });
     
     // Submit task that returns a string
-    auto future2 = pool.submit([]() {
+    auto future2 = pool.submit_task([]() {
         return std::string("Hello from thread pool!");
     });
     
-    // Submit task with parameters
-    auto future3 = pool.submit([](int a, int b) {
+    // submit_task task with parameters
+    auto future3 = pool.submit_task([](int a, int b) {
         return a + b;
     }, 10, 20);
     
@@ -427,9 +427,9 @@ void test_multiple_futures() {
     runtime::ThreadPool pool;
     std::vector<std::future<int>> futures;
     
-    // Submit 10 computation tasks
+    // submit_task 10 computation tasks
     for (int i = 0; i < 10; ++i) {
-        futures.push_back(pool.submit([i]() {
+        futures.push_back(pool.submit_task([i]() {
             // Simulate computation
             int result = 0;
             for (int j = 0; j < 1000000; ++j) {
@@ -456,7 +456,7 @@ void test_future_exceptions() {
     
     runtime::ThreadPool pool;
     
-    auto future = pool.submit([]() -> int {
+    auto future = pool.submit_task([]() -> int {
         throw std::runtime_error("Task failed!");
         return 42;
     });
@@ -478,7 +478,7 @@ void test_complex_return_types() {
     runtime::ThreadPool pool;
     
     // Return a vector
-    auto future1 = pool.submit([]() {
+    auto future1 = pool.submit_task([]() {
         return std::vector<int>{1, 2, 3, 4, 5};
     });
     
@@ -488,12 +488,12 @@ void test_complex_return_types() {
         std::string message;
     };
     
-    auto future2 = pool.submit([]() -> Result {
+    auto future2 = pool.submit_task([]() -> Result {
         return Result{100, "Success"};
     });
     
     // Return a pair
-    auto future3 = pool.submit([](int a, int b) {
+    auto future3 = pool.submit_task([](int a, int b) {
         return std::make_pair(a * b, a + b);
     }, 5, 7);
     
@@ -520,7 +520,7 @@ void test_future_wait_patterns() {
     
     runtime::ThreadPool pool;
     
-    auto future = pool.submit([]() {
+    auto future = pool.submit_task([]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         return 42;
     });

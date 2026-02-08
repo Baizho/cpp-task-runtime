@@ -24,7 +24,7 @@ class ThreadPool {
 
         // Submit task with future return value - just wraps submit()
         template<typename F, typename... Args>
-        auto submit(F&& f, Args&&... args) 
+        auto submit_task(F&& f, Args&&... args) 
             -> std::future<typename std::invoke_result<F, Args...>::type>;
         void submit(Task task);
         void wait(); 
@@ -76,7 +76,7 @@ class ThreadPool {
 };
 
 template<typename F, typename... Args>
-auto ThreadPool::submit(F&& f, Args&&... args) 
+auto ThreadPool::submit_task(F&& f, Args&&... args) 
     -> std::future<typename std::invoke_result<F, Args...>::type>
 {
     using return_type = typename std::invoke_result<F, Args...>::type;
