@@ -115,6 +115,7 @@ void ThreadPool::worker(size_t idx) {
 
         // try global queue
         if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
+            std::cout << "Steal from global queue\n";
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
                 execute_task(task);
@@ -146,12 +147,14 @@ size_t ThreadPool::get_next_victim(size_t i, size_t attempt) {
 // Execute task with exception handling
 void ThreadPool::execute_task(Task& task) {
     try {
-        // std::cout << "Executing task... \n";
+        // std::cout << active_tasks_.load(std::memory_order_relaxed) << "\n";
         task();
     } catch (const std::exception& e) {
-        // Optional: std::cerr << "Task exception: " << e.what() << '\n';
+        // Optional: 
+        // std::cerr << "Task exception: " << e.what() << '\n';
     } catch (...) {
-        // Optional: std::cerr << "Task unknown exception\n";
+        // Optional: 
+        // std::cerr << "Task unknown exception\n";
     }
 }
 
