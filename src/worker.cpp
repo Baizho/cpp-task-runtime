@@ -1,5 +1,7 @@
 // Worker implementation
 #include <runtime/thread_pool.h>
+#include <iostream>
+#include <stdexcept>
 
 namespace runtime {
 
@@ -10,7 +12,15 @@ void ThreadPool::worker(size_t idx) {
         if (work_queues_[idx].try_pop(task)) {
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
-                task();  // Exception-safe: guard decrements counter even if task throws
+                // Exception-safe: guard decrements counter even if task throws
+                try {
+                    task();
+                } catch (const std::exception& e) {
+                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
+                } catch (...) {
+                    std::cerr << "Caught an unknown exception" << std::endl;
+                }
+                
             }
             continue;
         }
@@ -19,7 +29,13 @@ void ThreadPool::worker(size_t idx) {
         if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
             {
                 TaskGuard guard(active_tasks_, cv_completion_);
-                task();
+                try {
+                    task();
+                } catch (const std::exception& e) {
+                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
+                } catch (...) {
+                    std::cerr << "Caught an unknown exception" << std::endl;
+                }
             }
             continue;
         }
@@ -34,7 +50,14 @@ void ThreadPool::worker(size_t idx) {
                 found_work = true;
                 {
                     TaskGuard guard(active_tasks_, cv_completion_);
-                    task();  // Exception-safe
+                    // Exception-safe
+                    try {
+                        task();
+                    } catch (const std::exception& e) {
+                        std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
+                    } catch (...) {
+                        std::cerr << "Caught an unknown exception" << std::endl;
+                    }
                 }
                 break;
             }
