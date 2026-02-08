@@ -29,7 +29,7 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
 // Destructor
 ThreadPool::~ThreadPool() noexcept {
     stop_.store(true, std::memory_order_release);
-	// Wait for the threads to finish
+	// Join all worker threads (blocking until all tasks complete)
 	for (auto& thr: threads_) {
 		thr.join();
 	}
@@ -44,7 +44,7 @@ void ThreadPool::submit(Task task) {
 
     active_tasks_.fetch_add(1, std::memory_order_release);
     
-    int idx = get_random_thread();
+    size_t idx = get_random_thread();
     // Try local queue first
     if (work_queues_[idx].try_push(std::move(task), max_queue_tasks_)) {
         return;
