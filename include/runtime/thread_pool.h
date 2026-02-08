@@ -10,6 +10,9 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <future>
+#include <type_traits>
+
 
 namespace runtime { 
 
@@ -19,6 +22,10 @@ class ThreadPool {
         explicit ThreadPool(const config::ThreadPoolOptions& options = {});
         ~ThreadPool() noexcept;
 
+        // Submit task with future return value - just wraps submit()
+        template<typename F, typename... Args>
+        auto submit(F&& f, Args&&... args) 
+            -> std::future<typename std::invoke_result<F, Args...>::type>;
         void submit(Task task);
         void wait(); 
     private:
@@ -62,7 +69,7 @@ class ThreadPool {
         std::atomic<size_t> active_tasks_{0}; // track running tasks
         std::condition_variable cv_completion_; 
         std::mutex completion_mutex_;
-        
+
         std::condition_variable cv_work_;
         std::mutex work_mutex_;
 
