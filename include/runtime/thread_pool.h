@@ -26,6 +26,23 @@ class ThreadPool {
         int get_random_thread();
         int get_next_victim(size_t i, size_t attempt);
 
+        // Helper for exception-safe task execution
+        struct TaskGuard {
+            std::atomic<size_t>& counter;
+            std::condition_variable& cv;
+            
+            TaskGuard(std::atomic<size_t>& c, std::condition_variable& v) 
+                : counter(c), cv(v) {}
+            
+            ~TaskGuard() {
+                size_t prev = counter.fetch_sub(1, std::memory_order_release);
+                // Only notify if this was the last task
+                if (prev == 1) {
+                    cv.notify_all();
+                }
+            }
+        };
+
         size_t thread_count_;
         int steal_attempts_;
         std::chrono::milliseconds idle_sleep_;
