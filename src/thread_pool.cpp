@@ -1,5 +1,7 @@
 // Thread pool with work stealing
 #include <runtime/thread_pool.h>
+#include <iostream>
+#include <algorithm>
 
 namespace runtime {
 
@@ -12,6 +14,13 @@ ThreadPool::ThreadPool(const config::ThreadPoolOptions& options)
       steal_policy_(options.steal_policy),
       stop_(false)
     {
+        // Validate configuration
+        if (thread_count_ == 0) {
+            throw std::invalid_argument("Thread count must be > 0");
+        }
+        if (steal_attempts_ <= 0) {
+            throw std::invalid_argument("Steal attempts must be > 0");
+        }
         work_queues_.resize(thread_count_);
         for (size_t i = 0; i < thread_count_; ++i) {
             threads_.emplace_back(&ThreadPool::worker, this, i);
@@ -29,7 +38,7 @@ ThreadPool::~ThreadPool() noexcept {
 
 // Choose a thread's queue and add a task to it
 void ThreadPool::submit(Task task) {
-    active_tasks_.fetch_add(1, std::memory_order_relaxed);  // ADD THIS LINE
+    active_tasks_.fetch_add(1, std::memory_order_relaxed);
     int i = get_random_thread();
 
     // Enforce capacity limit
