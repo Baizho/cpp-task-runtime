@@ -25,21 +25,6 @@ void ThreadPool::worker(size_t idx) {
             continue;
         }
 
-        // try global queue
-        if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
-            {
-                TaskGuard guard(active_tasks_, cv_completion_);
-                try {
-                    task();
-                } catch (const std::exception& e) {
-                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
-                } catch (...) {
-                    std::cerr << "Caught an unknown exception" << std::endl;
-                }
-            }
-            continue;
-        }
-
         // stealing from other threads
 
         bool found_work = false;
@@ -64,6 +49,21 @@ void ThreadPool::worker(size_t idx) {
         }
 
         if (found_work) continue;
+
+        // try global queue
+        if (global_queue_.try_steal(task)) {  // Use try_steal (FIFO from global)
+            {
+                TaskGuard guard(active_tasks_, cv_completion_);
+                try {
+                    task();
+                } catch (const std::exception& e) {
+                    std::cerr << "A task has crashed, Caught exception: " << e.what() << std::endl; 
+                } catch (...) {
+                    std::cerr << "Caught an unknown exception" << std::endl;
+                }
+            }
+            continue;
+        }
         
         if (stop_.load(std::memory_order_acquire) && active_tasks_.load(std::memory_order_acquire) == 0) {
             break;
