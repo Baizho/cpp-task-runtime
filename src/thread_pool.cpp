@@ -38,6 +38,11 @@ ThreadPool::~ThreadPool() noexcept {
 
 // Choose a thread's queue and add a task to it
 void ThreadPool::submit(Task task) {
+    // Check if shutting down
+    if (stop_.load(std::memory_order_acquire)) {
+        throw std::runtime_error("ThreadPool is shutting down");
+    }
+
     active_tasks_.fetch_add(1, std::memory_order_relaxed);
     int i = get_random_thread();
 
