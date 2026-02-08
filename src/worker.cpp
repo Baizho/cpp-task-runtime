@@ -8,9 +8,10 @@ void ThreadPool::worker(size_t idx) {
         Task task;
 
         if (work_queues_[idx].try_pop(task)) {
-            task();
-            active_tasks_.fetch_sub(1, std::memory_order_relaxed);
-            cv_completion_.notify_all();
+            {
+                TaskGuard guard(active_tasks_, cv_completion_);
+                task();  // Exception-safe: guard decrements counter even if task throws
+            }
             continue;
         }
 
@@ -20,9 +21,10 @@ void ThreadPool::worker(size_t idx) {
             size_t i = get_next_victim(idx, attempt);
             if (work_queues_[i].try_steal(task)) {
                 found_work = true;
-                task();
-                active_tasks_.fetch_sub(1, std::memory_order_relaxed);
-                cv_completion_.notify_all();
+                {
+                    TaskGuard guard(active_tasks_, cv_completion_);
+                    task();  // Exception-safe
+                }
                 break;
             }
         }
