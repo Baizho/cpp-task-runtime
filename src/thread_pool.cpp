@@ -1,6 +1,6 @@
 // Thread pool with work stealing
 #include <runtime/thread_pool.h>
-#include <iostream>
+#include <stdexcept>
 
 namespace runtime {
 

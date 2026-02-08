@@ -32,6 +32,25 @@ class ThreadPool {
         size_t max_queue_tasks_;
         config::StealPolicy steal_policy_;
 
+        struct TaskGuard {
+            std::atomic<size_t>& counter;
+            std::condition_variable& cv;
+            
+            TaskGuard(std::atomic<size_t>& c, std::condition_variable& v) 
+                : counter(c), cv(v) {}
+            
+            ~TaskGuard() noexcept { 
+                try {
+                    size_t prev = counter.fetch_sub(1, std::memory_order_release);
+                    if (prev == 1) {
+                        cv.notify_all();
+                    }
+                } catch (...) {
+                    // Suppress - destructor must not throw
+                }
+            }
+        };
+
         // indicate when it should stop
         std::atomic<bool> stop_;
         
