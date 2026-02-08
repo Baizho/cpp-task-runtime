@@ -20,11 +20,11 @@ void WorkStealingQueue::push(Task task) {
     deque_.push_back(std::move(task));
 }
 
-bool WorkStealingQueue::try_push(Task& task, size_t max_queue_size) {
+bool WorkStealingQueue::try_push(Task task, size_t max_queue_size) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (deque_.size() >= max_queue_size) return false;
-    
+
     deque_.push_back(std::move(task));
     return true;
 }
