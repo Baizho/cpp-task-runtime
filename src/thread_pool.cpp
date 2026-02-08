@@ -44,14 +44,15 @@ void ThreadPool::submit(Task task) {
     }
 
     active_tasks_.fetch_add(1, std::memory_order_relaxed);
-    int i = get_random_thread();
-
-    // Enforce capacity limit
-    if (work_queues_[i].size() >= max_queue_tasks_) {
-        // we will do something
+    
+    int idx = get_random_thread();
+    // Try local queue first
+    if (work_queues_[idx].try_push(std::move(task), max_queue_tasks_)) {
+        return;
     }
-
-    work_queues_[i].push(std::move(task));
+    
+    // Fallback to global queue (unbounded)
+    global_queue_.push(std::move(task));
 }
 
 // get random thread function
