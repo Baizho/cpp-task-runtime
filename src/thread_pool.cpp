@@ -30,6 +30,12 @@ ThreadPool::~ThreadPool() noexcept {
 // Choose a thread's queue and add a task to it
 void ThreadPool::submit(Task task) {
     int i = get_random_thread();
+
+    // Enforce capacity limit
+    if (work_queues_[i].size() >= max_queue_tasks_) {
+        // we will do something
+    }
+
     work_queues_[i].push(std::move(task));
 }
 
