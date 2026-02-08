@@ -33,14 +33,23 @@ add_executable(thread_pool_test
     tests/thread_pool_test.cpp
 )
 
-add_executable(work_stealing_queue_test
-    tests/work_stealing_queue_test.cpp
-)
-
 target_link_libraries(thread_pool_test
     PRIVATE runtime
+)
+
+add_executable(work_stealing_queue_test
+    tests/work_stealing_queue_test.cpp
 )
 
 target_link_libraries(work_stealing_queue_test
     PRIVATE runtime
 )
+
+add_executable(shutdown_test
+    tests/shutdown_test.cpp
+)
+
+target_link_libraries(shutdown_test
+    PRIVATE runtime
+)
+
