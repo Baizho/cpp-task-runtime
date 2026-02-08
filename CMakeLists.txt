@@ -33,6 +33,14 @@ add_executable(thread_pool_test
     test/thread_pool_test
 )
 
-target_link_libraries(basic_usage
+add_executable(work_stealing_queue_test
+    test/work_stealing_queue_test
+)
+
+target_link_libraries(thread_pool_test
+    PRIVATE runtime
+)
+
+target_link_libraries(work_stealing_queue_test
     PRIVATE runtime
 )
