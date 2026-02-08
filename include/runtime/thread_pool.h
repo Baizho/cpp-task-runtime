@@ -23,8 +23,8 @@ class ThreadPool {
         void wait(); 
     private:
         void worker(size_t idx);
-        int get_random_thread();
-        int get_next_victim(size_t i, size_t attempt);
+        size_t get_random_thread();
+        size_t get_next_victim(size_t i, size_t attempt);
 
         size_t thread_count_;
         int steal_attempts_;

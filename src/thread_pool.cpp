@@ -1,7 +1,6 @@
 // Thread pool with work stealing
 #include <runtime/thread_pool.h>
 #include <iostream>
-#include <algorithm>
 
 namespace runtime {
 
@@ -56,14 +55,14 @@ void ThreadPool::submit(Task task) {
 }
 
 // get random thread function
-int ThreadPool::get_random_thread() {
+size_t ThreadPool::get_random_thread() {
     thread_local std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(0, thread_count_ - 1);
+    std::uniform_int_distribution<size_t> dist(0, thread_count_ - 1);
     return dist(rng);
 }
 
 // get next victim according to the steal policy
-int ThreadPool::get_next_victim(size_t i, size_t attempt) {
+size_t ThreadPool::get_next_victim(size_t i, size_t attempt) {
     if (steal_policy_ == config::StealPolicy::Random) return get_random_thread();
     return (i + attempt) % thread_count_;
 }
