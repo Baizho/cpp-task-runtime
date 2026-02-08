@@ -68,6 +68,8 @@ size_t ThreadPool::get_next_victim(size_t i, size_t attempt) {
 }
 
 void ThreadPool::wait() {
+    //If a submitted task calls wait(), it deadlocks (task is counted, waits for count to reach 0, but can't complete while waiting).
+    // just a precaution
     std::unique_lock<std::mutex> lock(completion_mutex_);
     cv_completion_.wait(lock, [this] {
         return active_tasks_.load(std::memory_order_acquire) == 0;
