@@ -29,6 +29,7 @@ ThreadPool::~ThreadPool() noexcept {
 
 // Choose a thread's queue and add a task to it
 void ThreadPool::submit(Task task) {
+    active_tasks_.fetch_add(1, std::memory_order_relaxed);  // ADD THIS LINE
     int i = get_random_thread();
 
     // Enforce capacity limit
@@ -55,16 +56,7 @@ int ThreadPool::get_next_victim(size_t i, size_t attempt) {
 void ThreadPool::wait() {
     std::unique_lock<std::mutex> lock(completion_mutex_);
     cv_completion_.wait(lock, [this] {
-        // Check if all queues are empty and no tasks are running
-        if (active_tasks_.load(std::memory_order_relaxed) > 0) {
-            return false;
-        }
-        for (const auto& q : work_queues_) {
-            if (!q.empty()) {
-                return false;
-            }
-        }
-        return true;
+        return active_tasks_.load(std::memory_order_relaxed) == 0;
     });
 }
 

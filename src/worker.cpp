@@ -4,11 +4,10 @@
 namespace runtime {
 
 void ThreadPool::worker(size_t idx) {
-    while(!stop_.load(std::memory_order_acquire)) {
+    while(true) {
         Task task;
 
         if (work_queues_[idx].try_pop(task)) {
-            active_tasks_.fetch_add(1, std::memory_order_relaxed);
             task();
             active_tasks_.fetch_sub(1, std::memory_order_relaxed);
             cv_completion_.notify_all();
@@ -21,7 +20,6 @@ void ThreadPool::worker(size_t idx) {
             size_t i = get_next_victim(idx, attempt);
             if (work_queues_[i].try_steal(task)) {
                 found_work = true;
-                active_tasks_.fetch_add(1, std::memory_order_relaxed);
                 task();
                 active_tasks_.fetch_sub(1, std::memory_order_relaxed);
                 cv_completion_.notify_all();
@@ -30,10 +28,13 @@ void ThreadPool::worker(size_t idx) {
         }
 
         if (found_work) continue;
-        if (stop_.load(std::memory_order_acquire)) break;
-        
+        if (stop_.load(std::memory_order_acquire) && 
+            active_tasks_.load(std::memory_order_relaxed) == 0) {
+            break;
+        }
+
         std::this_thread::sleep_for(idle_sleep_); 
     }
 }
 
-} // runtime space
+} // namespace runtime
