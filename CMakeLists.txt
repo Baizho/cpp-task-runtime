@@ -30,11 +30,11 @@ target_include_directories(runtime
 # ==============================
 
 add_executable(thread_pool_test
-    test/thread_pool_test
+    tests/thread_pool_test.cpp
 )
 
 add_executable(work_stealing_queue_test
-    test/work_stealing_queue_test
+    tests/work_stealing_queue_test.cpp
 )
 
 target_link_libraries(thread_pool_test
