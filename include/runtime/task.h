@@ -2,6 +2,8 @@
 #define TASK_H
 
 #include <functional>
+#include <atomic>
+#include <condition_variable>
 
 namespace runtime {
 
