@@ -380,6 +380,163 @@ void test_wait_functionality() {
 }
 
 // ============================================================================
+// Test 12: Future Return Values
+// ============================================================================
+void test_future_return() {
+    print_test("Test 12: Future Return Values");
+    
+    runtime::ThreadPool pool;
+    
+    // Submit task that returns an int
+    auto future1 = pool.submit([]() {
+        return 42;
+    });
+    
+    // Submit task that returns a string
+    auto future2 = pool.submit([]() {
+        return std::string("Hello from thread pool!");
+    });
+    
+    // Submit task with parameters
+    auto future3 = pool.submit([](int a, int b) {
+        return a + b;
+    }, 10, 20);
+    
+    // Get results
+    int result1 = future1.get();
+    std::string result2 = future2.get();
+    int result3 = future3.get();
+    
+    print_info("Result 1: " + std::to_string(result1));
+    print_info("Result 2: " + result2);
+    print_info("Result 3: " + std::to_string(result3));
+    
+    if (result1 == 42 && result2 == "Hello from thread pool!" && result3 == 30) {
+        print_success("Future return values work correctly");
+    } else {
+        print_error("Future return values incorrect");
+    }
+}
+
+// ============================================================================
+// Test 13: Multiple Futures
+// ============================================================================
+void test_multiple_futures() {
+    print_test("Test 13: Multiple Futures - Parallel Computation");
+    
+    runtime::ThreadPool pool;
+    std::vector<std::future<int>> futures;
+    
+    // Submit 10 computation tasks
+    for (int i = 0; i < 10; ++i) {
+        futures.push_back(pool.submit([i]() {
+            // Simulate computation
+            int result = 0;
+            for (int j = 0; j < 1000000; ++j) {
+                result += j % (i + 1);
+            }
+            return result;
+        }));
+    }
+    
+    // Collect all results
+    int sum = 0;
+    for (auto& future : futures) {
+        sum += future.get();
+    }
+    
+    print_success("Computed sum from 10 parallel tasks: " + std::to_string(sum));
+}
+
+// ============================================================================
+// Test 14: Future Exception Handling
+// ============================================================================
+void test_future_exceptions() {
+    print_test("Test 14: Future Exception Handling");
+    
+    runtime::ThreadPool pool;
+    
+    auto future = pool.submit([]() -> int {
+        throw std::runtime_error("Task failed!");
+        return 42;
+    });
+    
+    try {
+        int result = future.get();
+        print_error("Should have thrown exception");
+    } catch (const std::runtime_error& e) {
+        print_success("Exception properly propagated through future: " + std::string(e.what()));
+    }
+}
+
+// ============================================================================
+// Test 15: Complex Return Types
+// ============================================================================
+void test_complex_return_types() {
+    print_test("Test 15: Complex Return Types");
+    
+    runtime::ThreadPool pool;
+    
+    // Return a vector
+    auto future1 = pool.submit([]() {
+        return std::vector<int>{1, 2, 3, 4, 5};
+    });
+    
+    // Return a struct
+    struct Result {
+        int value;
+        std::string message;
+    };
+    
+    auto future2 = pool.submit([]() -> Result {
+        return Result{100, "Success"};
+    });
+    
+    // Return a pair
+    auto future3 = pool.submit([](int a, int b) {
+        return std::make_pair(a * b, a + b);
+    }, 5, 7);
+    
+    auto vec = future1.get();
+    auto res = future2.get();
+    auto [product, sum] = future3.get();
+    
+    print_info("Vector size: " + std::to_string(vec.size()));
+    print_info("Struct: value=" + std::to_string(res.value) + ", msg=" + res.message);
+    print_info("Pair: product=" + std::to_string(product) + ", sum=" + std::to_string(sum));
+    
+    if (vec.size() == 5 && res.value == 100 && product == 35 && sum == 12) {
+        print_success("Complex return types work correctly");
+    } else {
+        print_error("Complex return types failed");
+    }
+}
+
+// ============================================================================
+// Test 16: Future with Wait
+// ============================================================================
+void test_future_wait_patterns() {
+    print_test("Test 16: Future Wait Patterns");
+    
+    runtime::ThreadPool pool;
+    
+    auto future = pool.submit([]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        return 42;
+    });
+    
+    // Check if ready
+    auto status = future.wait_for(std::chrono::milliseconds(10));
+    if (status == std::future_status::timeout) {
+        print_info("Future not ready yet (expected)");
+    }
+    
+    // Wait until ready
+    future.wait();
+    print_success("Future is ready, result: " + std::to_string(future.get()));
+}
+
+// ============================================================================
 // Main Test Runner
 // ============================================================================
 int main() {
@@ -402,6 +559,11 @@ int main() {
         test_graceful_shutdown();
         test_submit_after_shutdown();
         test_wait_functionality();
+        test_future_return();
+        test_multiple_futures();
+        test_future_exceptions();
+        test_complex_return_types();
+        test_future_wait_patterns();
         
         std::cout << "\n";
         std::cout << GREEN << "╔════════════════════════════════════════════════════════════╗\n";
