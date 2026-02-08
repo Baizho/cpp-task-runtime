@@ -41,17 +41,29 @@ void ThreadPool::submit(Task task) {
     if (stop_.load(std::memory_order_acquire)) {
         throw std::runtime_error("ThreadPool is shutting down");
     }
-
+    
+    // RAII guard for exception safety
+    struct SubmitGuard {
+        std::atomic<size_t>& counter;
+        bool committed = false;
+        ~SubmitGuard() noexcept {
+            if (!committed) {
+                counter.fetch_sub(1, std::memory_order_release);
+            }
+        }
+    };
+    
     active_tasks_.fetch_add(1, std::memory_order_release);
+    SubmitGuard guard{active_tasks_};
     
     size_t idx = get_random_thread();
-    // Try local queue first
     if (work_queues_[idx].try_push(std::move(task), max_queue_tasks_)) {
+        guard.committed = true;
         return;
     }
     
-    // Fallback to global queue (unbounded)
-    global_queue_.push(std::move(task));
+    global_queue_.push(std::move(task));  // Protected now!
+    guard.committed = true;
 }
 
 // get random thread function
