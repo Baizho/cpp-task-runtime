@@ -100,3 +100,45 @@ target_link_libraries(shutdown_test
 )
 
 # ==============================
+# Benchmarks
+# ==============================
+
+add_executable(heavy_tasks
+    benchmarks/heavy_tasks.cpp
+)
+
+target_link_libraries(heavy_tasks
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(latency_benchmark
+    benchmarks/latency_benchmark.cpp
+)
+
+target_link_libraries(latency_benchmark
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(scaling_benchmark
+    benchmarks/scaling_benchmark.cpp
+)
+
+target_link_libraries(scaling_benchmark
+    PRIVATE runtime
+)
+
+# ==============================
+
+add_executable(small_tasks
+    benchmarks/small_tasks.cpp
+)
+
+target_link_libraries(small_tasks
+    PRIVATE runtime
+)
+
+# ==============================
